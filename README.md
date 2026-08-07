@@ -21,7 +21,13 @@ and deploys to **https://resume.1ar.no**.
    - `resume.json` — the raw resume, served as a registry-style endpoint
    - `CNAME`, `.nojekyll`, `override.css` — GitHub Pages support files
 4. The `Deploy resume to GitHub Pages` workflow builds and publishes `dist/` on
-   every push to `main`, once a day (to pick up gist edits), and on demand.
+   every push to `main`, hourly (to pick up gist edits), and on demand.
+
+The site is a static build, so a gist edit shows up on the next rebuild: the
+hourly schedule (within ~an hour), the next push to `main`, or an immediate
+manual run from the Actions tab (*Deploy resume to GitHub Pages* → *Run
+workflow*). Each build re-fetches the gist's latest revision, so no code change
+is ever needed to publish a resume update.
 
 ## Local development
 

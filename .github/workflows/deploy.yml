@@ -4,10 +4,10 @@ on:
   # Deploy on every push to the default branch.
   push:
     branches: [main]
-  # Rebuild periodically so edits to the source gist are picked up
-  # automatically (07:00 UTC daily).
+  # Rebuild hourly so edits to the source gist are picked up automatically
+  # within about an hour (the build re-fetches the gist's latest revision).
   schedule:
-    - cron: '0 7 * * *'
+    - cron: '0 * * * *'
   # Allow manual runs from the Actions tab.
   workflow_dispatch:
 

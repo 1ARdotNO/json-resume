@@ -36,7 +36,7 @@ const ROOT = join(__dirname, '..');
 const DIST_DIR = join(ROOT, 'dist');
 
 // Default source: the profile gist's raw URL. Without a commit SHA this always
-// serves the latest revision, so the daily rebuild picks up gist edits, and it
+// serves the latest revision, so the hourly rebuild picks up gist edits, and it
 // needs no GitHub API token.
 export const DEFAULT_RESUME_URL =
   'https://gist.githubusercontent.com/1ARdotNO/7224de9f9b8e9e9691520193b1782594/raw/resume.json';
