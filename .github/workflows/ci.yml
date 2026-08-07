@@ -32,6 +32,10 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        env:
+          # The unit tests never launch a browser (buildSite runs with pdf:false),
+          # so skip Puppeteer's Chromium download to keep CI fast.
+          PUPPETEER_SKIP_DOWNLOAD: 'true'
 
       - name: Run tests
         run: npm test

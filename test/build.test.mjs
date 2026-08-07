@@ -16,6 +16,7 @@ import {
   loadResume,
   loadTheme,
   buildSite,
+  injectDownloadLink,
   DEFAULT_RESUME_URL,
   DEFAULT_DOMAIN,
   DEFAULT_THEME,
@@ -57,7 +58,30 @@ test('resolveConfig applies defaults for an empty environment', () => {
   assert.equal(c.url, '');
   assert.equal(c.theme, '');
   assert.equal(c.domain, DEFAULT_DOMAIN);
+  assert.equal(c.pdf, true); // PDF generation is on by default
   assert.equal(c.token, '');
+});
+
+test('resolveConfig disables PDF when RESUME_PDF is a falsey string', () => {
+  assert.equal(resolveConfig({ RESUME_PDF: '0' }).pdf, false);
+  assert.equal(resolveConfig({ RESUME_PDF: 'false' }).pdf, false);
+  assert.equal(resolveConfig({ RESUME_PDF: 'NO' }).pdf, false);
+  assert.equal(resolveConfig({ RESUME_PDF: '1' }).pdf, true);
+});
+
+test('injectDownloadLink adds a single download button before </body>', () => {
+  const out = injectDownloadLink('<html><body><h1>Hi</h1></body></html>');
+  assert.match(out, /class="pdf-download"/);
+  assert.match(out, /href="\.\/resume\.pdf"/);
+  assert.match(out, /download/);
+  // Anchor sits inside the body, before the closing tag.
+  assert.ok(out.indexOf('pdf-download') < out.indexOf('</body>'));
+  assert.equal(out.match(/pdf-download/g).length, 1);
+});
+
+test('injectDownloadLink appends when there is no </body>', () => {
+  const out = injectDownloadLink('<h1>no body tag</h1>', './other.pdf');
+  assert.match(out, /href="\.\/other\.pdf"/);
 });
 
 test('resolveConfig reads overrides and treats empty domain as opt-out', () => {
@@ -185,11 +209,16 @@ test('buildSite writes a complete site into the dist directory', async () => {
       distDir: dir,
       root: dir, // no public/override.css here -> default override is written
       domain: 'resume.example.com',
+      pdf: false, // don't launch a browser in unit tests
     });
 
     // index.html contains the rendered name.
     const html = await readFile(join(dir, 'index.html'), 'utf8');
     assert.match(html, /Test Person/);
+    // With PDF disabled, no download button and no resume.pdf.
+    assert.doesNotMatch(html, /pdf-download/);
+    assert.equal(manifest.pdf, false);
+    assert.ok(!existsSync(join(dir, 'resume.pdf')));
 
     // resume.json is valid and round-trips.
     const raw = await readFile(join(dir, 'resume.json'), 'utf8');
@@ -226,6 +255,7 @@ test('buildSite omits CNAME when the domain is empty', async () => {
       distDir: dir,
       root: dir,
       domain: '',
+      pdf: false,
     });
     assert.ok(!existsSync(join(dir, 'CNAME')));
     assert.ok(!manifest.files.includes('CNAME'));

@@ -18,6 +18,8 @@
 //                 to resume.meta.theme, then "stackoverflow".
 //   RESUME_DOMAIN Custom domain written to dist/CNAME (default: resume.1ar.no).
 //                 Set to an empty string to skip the CNAME file.
+//   RESUME_PDF    Generate a downloadable resume.pdf and add a download button
+//                 (default: on). Set to 0/false/no to skip (e.g. in unit CI).
 //   GITHUB_TOKEN  Optional; used only to raise the GitHub API rate limit.
 //
 // The functions below are exported so they can be unit-tested in isolation
@@ -52,6 +54,7 @@ export function resolveConfig(env = process.env) {
     url: env.RESUME_URL || '',
     theme: env.RESUME_THEME || '',
     domain: env.RESUME_DOMAIN ?? DEFAULT_DOMAIN,
+    pdf: !['0', 'false', 'no'].includes((env.RESUME_PDF ?? '').toLowerCase()),
     token: env.GITHUB_TOKEN || '',
   };
 }
@@ -148,7 +151,30 @@ export async function loadTheme(name, { log = () => {} } = {}) {
   }
 }
 
+// Insert a "Download PDF" button into the rendered HTML, just before </body>.
+// Styling lives in override.css (.pdf-download). Pure string transform.
+export function injectDownloadLink(html, href = './resume.pdf') {
+  const link =
+    `\n    <a class="pdf-download" href="${href}" download ` +
+    `aria-label="Download resume as PDF">↓ Download PDF</a>\n`;
+  return html.includes('</body>') ? html.replace('</body>', `${link}  </body>`) : html + link;
+}
+
+// Render the resume to a PDF buffer using resumed's puppeteer-backed export.
+// Honours PUPPETEER_EXECUTABLE_PATH (set automatically by puppeteer) so it can
+// reuse a system Chromium; --no-sandbox keeps it working on CI runners.
+export async function generatePdf({ resume, theme, html }) {
+  const { pdf } = await import('resumed');
+  const content = html ?? (await render(resume, theme));
+  return pdf(content, resume, theme, {
+    moduleName: 'puppeteer',
+    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+  });
+}
+
 // Render `resume` with `theme` and write the static site into `distDir`.
+// When `pdf` is true (default) a resume.pdf is generated and a download button
+// is added to the page; PDF failures are non-fatal — the site still deploys.
 // Returns a manifest describing what was written.
 export async function buildSite({
   resume,
@@ -157,10 +183,26 @@ export async function buildSite({
   distDir = DIST_DIR,
   root = ROOT,
   domain = DEFAULT_DOMAIN,
+  pdf = true,
+  log = () => {},
 }) {
-  const html = await render(resume, theme);
+  let html = await render(resume, theme);
 
   await mkdir(distDir, { recursive: true });
+
+  // Generate the PDF first; only advertise the download link if it succeeded.
+  let pdfGenerated = false;
+  if (pdf) {
+    try {
+      const buffer = await generatePdf({ resume, theme, html });
+      await writeFile(join(distDir, 'resume.pdf'), buffer);
+      html = injectDownloadLink(html);
+      pdfGenerated = true;
+    } catch (err) {
+      log(`PDF generation skipped: ${err.message}`);
+    }
+  }
+
   await writeFile(join(distDir, 'index.html'), html);
   // Expose the raw resume.json as a registry-style endpoint.
   await writeFile(join(distDir, 'resume.json'), JSON.stringify(resume, null, 2));
@@ -179,12 +221,13 @@ export async function buildSite({
   await writeFile(join(distDir, '.nojekyll'), '');
 
   const files = ['index.html', 'resume.json', 'override.css', '.nojekyll'];
+  if (pdfGenerated) files.push('resume.pdf');
   if (domain) {
     await writeFile(join(distDir, 'CNAME'), `${domain}\n`);
     files.push('CNAME');
   }
 
-  return { html, themeName, domain, distDir, files };
+  return { html, themeName, domain, distDir, files, pdf: pdfGenerated };
 }
 
 async function main() {
@@ -203,11 +246,15 @@ async function main() {
     theme,
     themeName: resolvedTheme,
     domain: config.domain,
+    pdf: config.pdf,
+    log,
   });
 
   const name = resume?.basics?.name || 'resume';
   log('');
   log(`Built ${name}'s resume from ${source}`);
+  if (manifest.pdf) log('Generated: dist/resume.pdf (Download PDF button added)');
+  else if (config.pdf) log('Note: PDF was not generated (see warning above)');
   log(`Output: dist/index.html (theme: ${resolvedTheme})`);
   if (manifest.domain) log(`Domain: ${manifest.domain}`);
 }

@@ -1,5 +1,36 @@
 /* Custom CSS overrides for the rendered resume.
  *
  * This file is copied into dist/override.css and loaded by the theme after its
- * own stylesheet, so anything here wins. Add tweaks (fonts, colors, spacing)
- * as you like. It ships empty by default. */
+ * own stylesheet, so anything here wins. */
+
+/* Floating "Download PDF" button (added by the build when a PDF is generated).
+ * Hidden when printing so it never shows up in the PDF itself. */
+.pdf-download {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  padding: 0.5rem 0.9rem;
+  font: 600 0.9rem/1 system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  color: #fff;
+  background: #0a95ff;
+  border-radius: 999px;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.pdf-download:hover,
+.pdf-download:focus {
+  background: #0077e6;
+  transform: translateY(-1px);
+}
+
+@media print {
+  .pdf-download {
+    display: none !important;
+  }
+}

@@ -16,11 +16,15 @@ and deploys to **https://resume.1ar.no**.
 2. It renders the resume with [`resumed`](https://github.com/rbardini/resumed)
    using the theme named in `resume.meta.theme` (currently
    [`stackoverflow`](https://www.npmjs.com/package/jsonresume-theme-stackoverflow)).
-3. The output is written to `dist/`:
-   - `index.html` — the rendered resume
+3. It also renders a **PDF** of the resume via
+   [`resumed`](https://github.com/rbardini/resumed)'s puppeteer export (using a
+   headless Chromium) and adds a floating *Download PDF* button to the page.
+4. The output is written to `dist/`:
+   - `index.html` — the rendered resume (with the Download PDF button)
+   - `resume.pdf` — the downloadable PDF version
    - `resume.json` — the raw resume, served as a registry-style endpoint
    - `CNAME`, `.nojekyll`, `override.css` — GitHub Pages support files
-4. The `Deploy resume to GitHub Pages` workflow builds and publishes `dist/` on
+5. The `Deploy resume to GitHub Pages` workflow builds and publishes `dist/` on
    every push to `main`, weekly (to pick up gist edits), and on demand.
 
 The site is a static build, so a gist edit shows up on the next rebuild: the
@@ -51,6 +55,7 @@ variables** under Settings → Secrets and variables → Actions → Variables):
 | `RESUME_USER`   | _(unset)_                            | GitHub username whose gists are searched for a `resume.json` (registry-style). |
 | `RESUME_THEME`  | `resume.meta.theme` → `stackoverflow`| Theme name without the `jsonresume-theme-` prefix. |
 | `RESUME_DOMAIN` | `resume.1ar.no`                      | Custom domain written to `dist/CNAME`. Empty string skips it. |
+| `RESUME_PDF`    | on                                   | Generate `resume.pdf` + the download button. Set to `0`/`false`/`no` to skip (needs a headless Chromium via `puppeteer`). |
 
 To use a different theme, add its npm package to `dependencies` (e.g.
 `jsonresume-theme-elegant`) and set `RESUME_THEME` accordingly.
