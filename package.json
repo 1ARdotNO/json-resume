@@ -1,0 +1,19 @@
+{
+  "name": "json-resume-registry",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Self-hosted JSON Resume registry that renders a GitHub gist resume to a static site for GitHub Pages.",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "serve": "node scripts/serve.mjs",
+    "dev": "npm run build && npm run serve"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "jsonresume-theme-stackoverflow": "3.3.0",
+    "resumed": "6.1.0"
+  }
+}

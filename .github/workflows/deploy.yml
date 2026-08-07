@@ -1,0 +1,68 @@
+name: Deploy resume to GitHub Pages
+
+on:
+  # Deploy on every push to the default branch.
+  push:
+    branches: [main]
+  # Rebuild periodically so edits to the source gist are picked up
+  # automatically (07:00 UTC daily).
+  schedule:
+    - cron: '0 7 * * *'
+  # Allow manual runs from the Actions tab.
+  workflow_dispatch:
+
+# Permissions required to deploy to GitHub Pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment; don't cancel in-progress runs.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build site
+        env:
+          # Raises the GitHub API rate limit for the gist fetch.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Override any of these via repository variables to point the site at
+          # a different gist, user, theme, or domain without editing code.
+          RESUME_USER: ${{ vars.RESUME_USER }}
+          RESUME_GIST: ${{ vars.RESUME_GIST }}
+          RESUME_URL: ${{ vars.RESUME_URL }}
+          RESUME_THEME: ${{ vars.RESUME_THEME }}
+          RESUME_DOMAIN: ${{ vars.RESUME_DOMAIN || 'resume.1ar.no' }}
+        run: npm run build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

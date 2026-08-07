@@ -1,0 +1,5 @@
+/* Custom CSS overrides for the rendered resume.
+ *
+ * This file is copied into dist/override.css and loaded by the theme after its
+ * own stylesheet, so anything here wins. Add tweaks (fonts, colors, spacing)
+ * as you like. It ships empty by default. */
