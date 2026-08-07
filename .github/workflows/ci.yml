@@ -1,0 +1,37 @@
+name: CI
+
+# Runs the test suite on every push to main and on every pull request
+# (including Renovate's dependency PRs). Renovate is configured to wait for
+# this workflow to pass before it automerges, so this is the gate that keeps
+# automated dependency updates safe.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
