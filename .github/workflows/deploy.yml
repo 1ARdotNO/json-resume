@@ -4,11 +4,11 @@ on:
   # Deploy on every push to the default branch.
   push:
     branches: [main]
-  # Rebuild hourly so edits to the source gist are picked up automatically
-  # within about an hour (the build re-fetches the gist's latest revision).
+  # Rebuild weekly (Mondays 07:00 UTC) to catch any gist edits; the resume
+  # rarely changes, so use the manual run below to publish an edit immediately.
   schedule:
-    - cron: '0 * * * *'
-  # Allow manual runs from the Actions tab.
+    - cron: '0 7 * * 1'
+  # Allow manual runs from the Actions tab (Run workflow) to deploy on demand.
   workflow_dispatch:
 
 # Permissions required to deploy to GitHub Pages.

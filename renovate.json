@@ -4,37 +4,36 @@
     "config:recommended",
     ":dependencyDashboard",
     ":semanticCommits",
+    "group:allNonMajor",
     "helpers:pinGitHubActionDigests"
   ],
   "labels": ["dependencies"],
+  "prConcurrentLimit": 0,
+  "prHourlyLimit": 0,
+  "rangeStrategy": "bump",
   "automerge": true,
-  "platformAutomerge": false,
-  "internalChecksFilter": "strict",
-  "minimumReleaseAge": "3 days",
-  "prHourlyLimit": 4,
+  "major": {
+    "automerge": true
+  },
   "lockFileMaintenance": {
     "enabled": true,
     "automerge": true,
     "schedule": ["before 6am on monday"]
   },
+  "vulnerabilityAlerts": {
+    "labels": ["security"],
+    "automerge": true
+  },
   "packageRules": [
     {
-      "description": "Automerge GitHub Actions updates once CI passes.",
+      "description": "Heavy automerge for everything — the CI suite (tests + build + CodeQL) is the safety net, so any update that stays green merges itself.",
+      "matchManagers": ["npm", "github-actions"],
+      "automerge": true
+    },
+    {
+      "description": "Group all GitHub Actions bumps into one PR.",
       "matchManagers": ["github-actions"],
-      "automerge": true
-    },
-    {
-      "description": "Automerge non-major npm updates once CI passes.",
-      "matchManagers": ["npm"],
-      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
-      "automerge": true
-    },
-    {
-      "description": "Major npm updates: still automerged, but held longer so the render/schema tests catch breakage first.",
-      "matchManagers": ["npm"],
-      "matchUpdateTypes": ["major"],
-      "automerge": true,
-      "minimumReleaseAge": "7 days"
+      "groupName": "github-actions"
     }
   ]
 }
