@@ -151,11 +151,22 @@ export async function loadTheme(name, { log = () => {} } = {}) {
   }
 }
 
+// Derive a friendly download filename from the resume, e.g.
+// "Einar Stenberg" -> "Einar-Stenberg-Resume.pdf". Falls back to resume.pdf.
+export function pdfDownloadName(resume) {
+  const name = (resume?.basics?.name || '').trim();
+  if (!name) return 'resume.pdf';
+  const safe = name.replace(/[/\\:*?"<>|]+/g, '').replace(/\s+/g, '-');
+  return `${safe}-Resume.pdf`;
+}
+
 // Insert a "Download PDF" button into the rendered HTML, just before </body>.
-// Styling lives in override.css (.pdf-download). Pure string transform.
-export function injectDownloadLink(html, href = './resume.pdf') {
+// `downloadName` sets the saved filename via the anchor's download attribute
+// while the href stays a stable path. Styling lives in override.css. Pure.
+export function injectDownloadLink(html, href = './resume.pdf', downloadName = '') {
+  const downloadAttr = downloadName ? `download="${downloadName}"` : 'download';
   const link =
-    `\n    <a class="pdf-download" href="${href}" download ` +
+    `\n    <a class="pdf-download" href="${href}" ${downloadAttr} ` +
     `aria-label="Download resume as PDF">↓ Download PDF</a>\n`;
   return html.includes('</body>') ? html.replace('</body>', `${link}  </body>`) : html + link;
 }
@@ -196,7 +207,7 @@ export async function buildSite({
     try {
       const buffer = await generatePdf({ resume, theme, html });
       await writeFile(join(distDir, 'resume.pdf'), buffer);
-      html = injectDownloadLink(html);
+      html = injectDownloadLink(html, './resume.pdf', pdfDownloadName(resume));
       pdfGenerated = true;
     } catch (err) {
       log(`PDF generation skipped: ${err.message}`);

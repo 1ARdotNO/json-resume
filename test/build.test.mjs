@@ -17,6 +17,7 @@ import {
   loadTheme,
   buildSite,
   injectDownloadLink,
+  pdfDownloadName,
   DEFAULT_RESUME_URL,
   DEFAULT_DOMAIN,
   DEFAULT_THEME,
@@ -82,6 +83,23 @@ test('injectDownloadLink adds a single download button before </body>', () => {
 test('injectDownloadLink appends when there is no </body>', () => {
   const out = injectDownloadLink('<h1>no body tag</h1>', './other.pdf');
   assert.match(out, /href="\.\/other\.pdf"/);
+});
+
+test('injectDownloadLink sets the saved filename via the download attribute', () => {
+  const out = injectDownloadLink('<body></body>', './resume.pdf', 'Einar-Stenberg-Resume.pdf');
+  assert.match(out, /download="Einar-Stenberg-Resume\.pdf"/);
+});
+
+test('pdfDownloadName builds a friendly filename from the resume name', () => {
+  assert.equal(
+    pdfDownloadName({ basics: { name: 'Einar Stenberg' } }),
+    'Einar-Stenberg-Resume.pdf',
+  );
+  // Filesystem-unsafe characters are stripped; extra whitespace collapses.
+  assert.equal(pdfDownloadName({ basics: { name: 'A/B  C' } }), 'AB-C-Resume.pdf');
+  // Missing name falls back to the generic filename.
+  assert.equal(pdfDownloadName({}), 'resume.pdf');
+  assert.equal(pdfDownloadName({ basics: { name: '   ' } }), 'resume.pdf');
 });
 
 test('resolveConfig reads overrides and treats empty domain as opt-out', () => {
