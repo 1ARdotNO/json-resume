@@ -11,11 +11,11 @@
     "test": "node --test"
   },
   "engines": {
-    "node": ">=24.21.0"
+    "node": ">=24.22.0"
   },
   "dependencies": {
     "jsonresume-theme-stackoverflow": "3.3.0",
-    "puppeteer": "^25.13.0",
+    "puppeteer": "^25.14.0",
     "resumed": "7.0.0"
   }
 }
