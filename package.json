@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "jsonresume-theme-stackoverflow": "3.3.0",
-    "puppeteer": "^25.14.0",
+    "puppeteer": "^25.15.0",
     "resumed": "7.1.0"
   }
 }
